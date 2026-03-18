@@ -21,9 +21,9 @@
         "name": "next"
       }
     ],
-    "paths": {
-      "@/*": ["./*"]
-    }
+   "paths": {
+  "@/*": ["./*"]
+   }
   },
   "include": [
     "next-env.d.ts",
