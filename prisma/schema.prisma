@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  studentId       String   @unique
+  username        String   @unique
+  name            String
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  batch           String   // "2028 AL" or "2027 AL"
+  enrolledClasses Json?    // Array of strings, e.g. ["2028 Theory", "2028 Paper"]
+  contactNo       String
+  email           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  payments        Payment[]
+  tuteSent        TuteSent[]
+}
+
+model Tute {
+  id        String   @id @default(cuid())
+  tuteId    String   @unique
+  name      String
+  month     String
+  year      Int
+  batch     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // No direct relation to TuteSent because we store tuteIds as array in TuteSent
+}
+
+model TuteSent {
+  id             String   @id @default(cuid())
+  distributionId String   @unique
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  tuteIds        String[] // Array of tute IDs
+  trackingId     String   @unique
+  sentDate       DateTime
+  month          String
+  year           Int
+  batch          String
+  createdAt      DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  invoiceNo     String   @unique
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  month         String
+  year          Int
+  classFee      Int
+  courierFee    Int
+  totalAmount   Int
+  paymentStatus String   // "Paid" or "Pending"
+  paymentDate   DateTime?
+  paymentMethod String?
+  trackingId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Setting {
+  id            String   @id @default(cuid())
+  fee2027Theory Int
+  fee2027Paper  Int
+  fee2028Theory Int
+  fee2028Paper  Int
+  courierFee    Int
+  bankDetails   String
+  updatedAt     DateTime @updatedAt
+}
