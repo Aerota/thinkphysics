@@ -45,8 +45,8 @@ export default function DashboardPage() {
       const data = await res.json()
       setStats(data)
     } catch (error) {
-      toast.error('Failed to load dashboard data')
-      // Set fallback data to avoid empty page
+      toast.error('Failed to load dashboard')
+      // Fallback to zeros so the page doesn't break
       setStats({
         totalStudents: 0,
         totalRevenue: 0,
@@ -63,7 +63,7 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <div className="p-6 text-center">Loading dashboard...</div>
+    return <div className="p-6 text-center">Loading...</div>
   }
 
   if (!stats) {
