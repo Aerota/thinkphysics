@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Users, BookOpen, CreditCard, TrendingUp } from 'lucide-react'
 import {
   LineChart,
@@ -14,42 +15,71 @@ import {
   Pie,
   Cell
 } from 'recharts'
+import toast from 'react-hot-toast'
 
-const monthlyData = [
-  { month: 'Jan', revenue: 41000, students: 10 },
-  { month: 'Feb', revenue: 82000, students: 20 },
-  { month: 'Mar', revenue: 123000, students: 30 },
-  { month: 'Apr', revenue: 164000, students: 40 },
-  { month: 'May', revenue: 205000, students: 50 },
-  { month: 'Jun', revenue: 246000, students: 60 },
-  { month: 'Jul', revenue: 287000, students: 70 },
-]
+interface Stats {
+  totalStudents: number
+  totalRevenue: number
+  pendingAmount: number
+  pendingStudentsCount: number
+  tutesSentThisMonth: number
+  monthlyRevenue: { month: string; revenue: number }[]
+  distribution: { name: string; value: number }[]
+  recentPayments: { id: string; student: string; amount: number; status: string; date: string }[]
+}
 
-const batchDistribution = [
-  { name: '2028 AL', value: 45, color: '#ef4444' },
-  { name: '2027 AL', value: 25, color: '#f87171' },
-]
-
-
-const recentPayments = [
-  { id: 1, student: 'Kamal Perera', amount: 4100, status: 'Paid', date: '2024-01-15' },
-  { id: 2, student: 'Nimal Silva', amount: 4100, status: 'Pending', date: '2024-01-14' },
-  { id: 3, student: 'Sunil Fernando', amount: 4100, status: 'Paid', date: '2024-01-13' },
-
-]
-
-
+const COLORS = ['#ef4444', '#f87171']
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/dashboard/stats')
+      if (!res.ok) throw new Error('Failed to fetch')
+      const data = await res.json()
+      setStats(data)
+    } catch (error) {
+      toast.error('Failed to load dashboard data')
+      // Set fallback data to avoid empty page
+      setStats({
+        totalStudents: 0,
+        totalRevenue: 0,
+        pendingAmount: 0,
+        pendingStudentsCount: 0,
+        tutesSentThisMonth: 0,
+        monthlyRevenue: [],
+        distribution: [],
+        recentPayments: []
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="p-6 text-center">Loading dashboard...</div>
+  }
+
+  if (!stats) {
+    return <div className="p-6 text-center">No data available</div>
+  }
+
   return (
     <div className="p-6">
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Students</p>
-              <p className="text-2xl font-bold">12</p>
-              <p className="text-xs text-green-500 mt-1">+5.2% vs last month</p>
+              <p className="text-2xl font-bold">{stats.totalStudents}</p>
+              <p className="text-xs text-green-500 mt-1">+0% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <Users className="w-6 h-6 text-red-600" />
@@ -61,8 +91,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold">LKR 4100</p>
-              <p className="text-xs text-green-500 mt-1">+2.08% vs last month</p>
+              <p className="text-2xl font-bold">
+                LKR {stats.totalRevenue?.toLocaleString() ?? '0'}
+              </p>
+              <p className="text-xs text-green-500 mt-1">+0% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-red-600" />
@@ -74,8 +106,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Pending Payments</p>
-              <p className="text-2xl font-bold">LKR 32,800</p>
-              <p className="text-xs text-red-500 mt-1">8 students pending</p>
+              <p className="text-2xl font-bold">
+                LKR {stats.pendingAmount?.toLocaleString() ?? '0'}
+              </p>
+              <p className="text-xs text-red-500 mt-1">{stats.pendingStudentsCount} students pending</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
               <CreditCard className="w-6 h-6 text-red-600" />
@@ -87,7 +121,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Tutes Sent</p>
-              <p className="text-2xl font-bold">156</p>
+              <p className="text-2xl font-bold">{stats.tutesSentThisMonth}</p>
               <p className="text-xs text-red-500 mt-1">This month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -97,11 +131,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Revenue Chart */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4">Revenue Overview</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyData}>
+            <LineChart data={stats.monthlyRevenue}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -112,12 +148,13 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
+        {/* Batch Distribution */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4">Student Distribution by Batch</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={batchDistribution}
+                data={stats.distribution}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -126,8 +163,8 @@ export default function DashboardPage() {
                 fill="#ef4444"
                 dataKey="value"
               >
-                {batchDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                {stats.distribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -136,6 +173,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Recent Payments */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Payments</h2>
         <div className="overflow-x-auto">
@@ -149,10 +187,10 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recentPayments.map((payment) => (
+              {stats.recentPayments.map((payment) => (
                 <tr key={payment.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">{payment.student}</td>
-                  <td className="py-3 px-4">LKR {payment.amount}</td>
+                  <td className="py-3 px-4">LKR {payment.amount?.toLocaleString() ?? '0'}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       payment.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
