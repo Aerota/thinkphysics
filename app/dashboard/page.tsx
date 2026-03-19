@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Users, BookOpen, CreditCard, TrendingUp } from 'lucide-react'
 import {
   LineChart,
@@ -40,17 +39,6 @@ const recentPayments = [
 ]
 
 
-export default function MyReportPage() {
-  const [stats, setStats] = useState(null)
-
-  useEffect(() => {
-    fetch('/api/dashboard/stats')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(err => console.error(err))
-  }, [])
-
-  if (!stats) return <div>Loading...</div>
 
 export default function DashboardPage() {
   return (
