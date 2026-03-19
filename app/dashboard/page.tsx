@@ -58,7 +58,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Students</p>
-              <p className="text-2xl font-bold">{stats.totalStudents}</p>
+              <p className="text-2xl font-bold">12</p>
               <p className="text-xs text-green-500 mt-1">+5.2% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -71,7 +71,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold">LKR {stats.totalRevenue}</p>
+              <p className="text-2xl font-bold">LKR 4100</p>
               <p className="text-xs text-green-500 mt-1">+2.08% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
