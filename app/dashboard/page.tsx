@@ -32,18 +32,6 @@ const batchDistribution = [
 ]
 
 
-export default function MyReportPage() {
-  const [stats, setStats] = useState(null)
-
-  useEffect(() => {
-    fetch('/api/dashboard/stats')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(err => console.error(err))
-  }, [])
-
-  if (!stats) return <div>Loading...</div>
-
 const recentPayments = [
   { id: 1, student: 'Kamal Perera', amount: 4100, status: 'Paid', date: '2024-01-15' },
   { id: 2, student: 'Nimal Silva', amount: 4100, status: 'Pending', date: '2024-01-14' },
