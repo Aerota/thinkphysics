@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Users, BookOpen, CreditCard, TrendingUp } from 'lucide-react'
 import {
   LineChart,
@@ -30,6 +31,19 @@ const batchDistribution = [
   { name: '2027 AL', value: 25, color: '#f87171' },
 ]
 
+
+export default function MyReportPage() {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(err => console.error(err))
+  }, [])
+
+  if (!stats) return <div>Loading...</div>
+
 const recentPayments = [
   { id: 1, student: 'Kamal Perera', amount: 4100, status: 'Paid', date: '2024-01-15' },
   { id: 2, student: 'Nimal Silva', amount: 4100, status: 'Pending', date: '2024-01-14' },
@@ -44,7 +58,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Students</p>
-              <p className="text-2xl font-bold">128</p>
+              <p className="text-2xl font-bold">{stats.totalStudents}</p>
               <p className="text-xs text-green-500 mt-1">+5.2% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -57,7 +71,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold">LKR 524,800</p>
+              <p className="text-2xl font-bold">LKR {stats.totalRevenue}</p>
               <p className="text-xs text-green-500 mt-1">+2.08% vs last month</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
