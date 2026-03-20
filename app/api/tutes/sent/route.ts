@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const distributionId = generateDistributionId()
     const sentDate = new Date()
 
-    // Create TuteSent record
+    // 1. Create the TuteSent record
     const tuteSent = await prisma.tuteSent.create({
       data: {
         distributionId,
@@ -23,46 +23,31 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Get student to determine class fee
+    // 2. Get student details (to know the batch and thus the fee)
     const student = await prisma.student.findUnique({
       where: { id: studentId }
     })
-    const classFee = student?.batch === '2028 AL' ? 3800 : 3800 // adjust if different
+
+    // Determine class fee based on student's batch (you can also fetch from settings table later)
+    const classFee = student?.batch === '2028 AL' ? 3800 : 3800
     const courierFee = 300
     const totalAmount = classFee + courierFee
 
-    // Check if an invoice already exists for this student, month, year
-    const existingInvoice = await prisma.payment.findFirst({
-      where: {
+    // 3. Always create a new invoice (do NOT check for existing)
+    const invoiceNo = generateInvoiceNo()
+    await prisma.payment.create({
+      data: {
+        invoiceNo,
         studentId,
         month,
         year,
+        classFee,
+        courierFee,
+        totalAmount,
+        paymentStatus: 'Pending',
+        trackingId,
       }
     })
-
-    if (existingInvoice) {
-      // Update existing invoice with new tracking ID
-      await prisma.payment.update({
-        where: { id: existingInvoice.id },
-        data: { trackingId }
-      })
-    } else {
-      // Create new invoice
-      const invoiceNo = generateInvoiceNo()
-      await prisma.payment.create({
-        data: {
-          invoiceNo,
-          studentId,
-          month,
-          year,
-          classFee,
-          courierFee,
-          totalAmount,
-          paymentStatus: 'Pending',
-          trackingId,
-        }
-      })
-    }
 
     return NextResponse.json(tuteSent)
   } catch (error) {
