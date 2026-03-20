@@ -17,13 +17,14 @@ export async function GET() {
     })
     const totalRevenue = paidPayments._sum.totalAmount || 0
 
-    // Pending payments sum and count of students with pending
+    // Pending payments sum
     const pendingPayments = await prisma.payment.aggregate({
       where: { paymentStatus: 'Pending' },
       _sum: { totalAmount: true }
     })
     const pendingAmount = pendingPayments._sum.totalAmount || 0
 
+    // Count distinct students with at least one pending payment
     const pendingStudents = await prisma.payment.findMany({
       where: { paymentStatus: 'Pending' },
       select: { studentId: true },
@@ -33,10 +34,13 @@ export async function GET() {
 
     // Tutes sent this month
     const tutesSentThisMonth = await prisma.tuteSent.count({
-      where: { month: currentMonth, year: currentYear }
+      where: {
+        month: currentMonth,
+        year: currentYear
+      }
     })
 
-    // Revenue by month for last 7 months
+    // Revenue by month for chart (last 7 months)
     const months = []
     for (let i = 6; i >= 0; i--) {
       const d = new Date()
@@ -48,11 +52,15 @@ export async function GET() {
 
     const monthlyRevenue = await Promise.all(months.map(async ({ month, year }) => {
       const sum = await prisma.payment.aggregate({
-        where: { month, year, paymentStatus: 'Paid' },
+        where: {
+          month,
+          year,
+          paymentStatus: 'Paid'
+        },
         _sum: { totalAmount: true }
       })
       return {
-        month: month.slice(0, 3), // abbreviate
+        month: month.slice(0, 3),
         revenue: sum._sum.totalAmount || 0
       }
     }))
@@ -93,6 +101,9 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Dashboard stats error:', error)
-    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch dashboard statistics' },
+      { status: 500 }
+    )
   }
 }
