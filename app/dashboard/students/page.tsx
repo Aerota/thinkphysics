@@ -13,7 +13,7 @@ interface Student {
   addressLine2: string
   city: string
   batch: string
-  enrolledClasses: string[]  // array of class types
+  enrolledClasses: string[]
   contactNo: string
   email: string
 }
@@ -27,7 +27,6 @@ interface Tute {
   batch: string
 }
 
-// Available class types per batch
 const classOptions = {
   '2028 AL': ['2028 Theory', '2028 Paper'],
   '2027 AL': ['2027 Theory', '2027 Paper']
@@ -57,6 +56,7 @@ export default function StudentsPage() {
   const [editStudent, setEditStudent] = useState<Student | null>(null)
   const [selectedTuteIds, setSelectedTuteIds] = useState<string[]>([])
   const [trackingId, setTrackingId] = useState('')
+  const [addClassFee, setAddClassFee] = useState(true)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -68,7 +68,6 @@ export default function StudentsPage() {
     try {
       const res = await fetch('/api/students')
       const data = await res.json()
-      // Ensure enrolledClasses is an array
       const formatted = data.map((s: any) => ({
         ...s,
         enrolledClasses: s.enrolledClasses || []
@@ -227,6 +226,7 @@ export default function StudentsPage() {
     setSelectedStudent(student)
     setSelectedTuteIds([])
     setTrackingId('')
+    setAddClassFee(true) // reset to default
     fetchSentTutes(student.id)
     setShowSendModal(true)
   }
@@ -256,7 +256,8 @@ export default function StudentsPage() {
           trackingId,
           month,
           year,
-          batch
+          batch,
+          addClassFee,
         })
       })
       if (res.ok) {
@@ -317,7 +318,6 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
           <div className="flex-1 relative">
@@ -342,7 +342,6 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* Students Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -474,7 +473,7 @@ export default function StudentsPage() {
                   setNewStudent({
                     ...newStudent,
                     batch,
-                    enrolledClasses: [] // reset enrolled classes when batch changes
+                    enrolledClasses: []
                   })
                 }}
               >
@@ -482,7 +481,6 @@ export default function StudentsPage() {
                 <option value="2027 AL">2027 AL</option>
               </select>
 
-              {/* Class checkboxes */}
               <div>
                 <label className="block text-sm font-medium mb-2">Enrolled Classes (select all that apply)</label>
                 <div className="space-y-2">
@@ -588,7 +586,7 @@ export default function StudentsPage() {
                   setEditStudent({
                     ...editStudent,
                     batch,
-                    enrolledClasses: [] // reset when batch changes
+                    enrolledClasses: []
                   })
                 }}
               >
@@ -596,7 +594,6 @@ export default function StudentsPage() {
                 <option value="2027 AL">2027 AL</option>
               </select>
 
-              {/* Class checkboxes */}
               <div>
                 <label className="block text-sm font-medium mb-2">Enrolled Classes</label>
                 <div className="space-y-2">
@@ -648,7 +645,7 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {/* Send Tutes Modal (unchanged, same as before) */}
+      {/* Send Tutes Modal */}
       {showSendModal && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -667,6 +664,20 @@ export default function StudentsPage() {
                 value={trackingId}
                 onChange={(e) => setTrackingId(e.target.value)}
               />
+            </div>
+            <div className="mb-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={addClassFee}
+                  onChange={(e) => setAddClassFee(e.target.checked)}
+                  className="rounded text-red-600"
+                />
+                <span className="text-sm text-gray-700">Add class fee to invoice</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Uncheck if this tute delivery does not include a class fee (e.g., for past tutes).
+              </p>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Select Tutes (gray ones have been sent before)</label>
