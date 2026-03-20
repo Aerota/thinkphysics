@@ -4,12 +4,12 @@ import { generateDistributionId, generateInvoiceNo } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
-    const { studentId, tuteIds, trackingId, month, year, batch } = await request.json()
+    const { studentId, tuteIds, trackingId, month, year, batch, addClassFee } = await request.json()
 
     const distributionId = generateDistributionId()
     const sentDate = new Date()
 
-    // 1. Create the TuteSent record
+    // 1. Create TuteSent record
     const tuteSent = await prisma.tuteSent.create({
       data: {
         distributionId,
@@ -23,17 +23,37 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // 2. Get student details (to know the batch and thus the fee)
+    // 2. Fetch student details and enrolled classes
     const student = await prisma.student.findUnique({
-      where: { id: studentId }
+      where: { id: studentId },
+      select: { enrolledClasses: true, batch: true }
     })
 
-    // Determine class fee based on student's batch (you can also fetch from settings table later)
-    const classFee = student?.batch === '2028 AL' ? 3800 : 3800
-    const courierFee = 300
+    // 3. Fetch settings (fees)
+    const settings = await prisma.setting.findFirst()
+    if (!settings) {
+      throw new Error('Settings not found')
+    }
+
+    // 4. Calculate class fee based on enrolled classes
+    let classFee = 0
+    if (addClassFee && student?.enrolledClasses) {
+      const enrolled = student.enrolledClasses as string[]
+      const feeMap: Record<string, number> = {
+        '2028 Theory': settings.fee2028Theory,
+        '2028 Paper': settings.fee2028Paper,
+        '2027 Theory': settings.fee2027Theory,
+        '2027 Paper': settings.fee2027Paper,
+      }
+      for (const cls of enrolled) {
+        classFee += feeMap[cls] || 0
+      }
+    }
+
+    const courierFee = settings.courierFee
     const totalAmount = classFee + courierFee
 
-    // 3. Always create a new invoice (do NOT check for existing)
+    // 5. Create a new invoice
     const invoiceNo = generateInvoiceNo()
     await prisma.payment.create({
       data: {
@@ -51,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(tuteSent)
   } catch (error) {
-    console.error(error)
+    console.error('Error sending tutes:', error)
     return NextResponse.json({ error: 'Failed to send tutes' }, { status: 500 })
   }
 }
