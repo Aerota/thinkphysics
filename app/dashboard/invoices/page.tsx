@@ -108,7 +108,7 @@ export default function InvoicesPage() {
             </div>
             <div class="to">
               <strong>Bill To</strong><br>
-              ${invoice.studentId}<br>
+              ${invoice.studentName}<br>
               ${addressLines.join('<br>')}
             </div>
           </div>
