@@ -22,18 +22,19 @@ export async function POST(request: NextRequest) {
     }
     const studentId = generateStudentId()
     const student = await prisma.student.create({
-      data: {
-        studentId,
-        username: data.username,
-        name: data.name,
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2 || '',
-        city: data.city,
-        batch: data.batch,
-        contactNo: data.contactNo,
-        email: data.email || '',
-      }
-    })
+  data: {
+    studentId,
+    username: data.username,
+    name: data.name,
+    addressLine1: data.addressLine1,
+    addressLine2: data.addressLine2 || '',
+    city: data.city,
+    batch: data.batch,
+    enrolledClasses: data.enrolledClasses || [],  // ← this line is critical
+    contactNo: data.contactNo,
+    email: data.email || '',
+  }
+})
     return NextResponse.json(student)
   } catch (error) {
     console.error(error)
