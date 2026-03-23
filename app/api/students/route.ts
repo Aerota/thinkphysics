@@ -16,25 +16,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    // Validate required fields including username
-    if (!data.username) {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 })
+    if (!data.username || !data.name || !data.addressLine1 || !data.city || !data.contactNo || !data.batch) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
     const studentId = generateStudentId()
     const student = await prisma.student.create({
-  data: {
-    studentId,
-    username: data.username,
-    name: data.name,
-    addressLine1: data.addressLine1,
-    addressLine2: data.addressLine2 || '',
-    city: data.city,
-    batch: data.batch,
-    enrolledClasses: data.enrolledClasses || [],  // ← this line is critical
-    contactNo: data.contactNo,
-    email: data.email || '',
-  }
-})
+      data: {
+        studentId,
+        username: data.username,
+        name: data.name,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2 || '',
+        city: data.city,
+        batch: data.batch,
+        enrolledClasses: data.enrolledClasses || [],  // ← this line is critical
+        contactNo: data.contactNo,
+        email: data.email || '',
+      }
+    })
     return NextResponse.json(student)
   } catch (error) {
     console.error(error)
@@ -49,9 +48,7 @@ export async function DELETE(request: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
     }
-    await prisma.student.delete({
-      where: { id }
-    })
+    await prisma.student.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete student' }, { status: 500 })
@@ -75,6 +72,7 @@ export async function PATCH(request: NextRequest) {
         addressLine2: data.addressLine2,
         city: data.city,
         batch: data.batch,
+        enrolledClasses: data.enrolledClasses || [],  // ← also in PATCH
         contactNo: data.contactNo,
         email: data.email,
       }
